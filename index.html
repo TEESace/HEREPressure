@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แอปพยากรณ์ความกดอากาศ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .cors-notice {
+            margin: 10px 0;
+            padding: 15px;
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            border-radius: 10px;
+            color: white;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        .cors-notice a {
+            color: #ffeb3b;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .cors-notice a:hover {
+            text-decoration: underline;
+        }
+
+        .location-input {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .location-input input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            placeholder-color: rgba(255, 255, 255, 0.7);
+        }
+
+        .location-input input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .location-input button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .location-input button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .current-pressure {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 30px;
+            color: white;
+        }
+
+        .current-pressure h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .pressure-value {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .pressure-unit {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
+        .forecast-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .forecast-section h3 {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .hourly-forecast, .daily-forecast {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .hourly-forecast {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
+
+        .daily-forecast {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        }
+
+        .hourly-item, .daily-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .hourly-item:hover, .daily-item:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .day-name {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .high-low {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .current-location {
+            color: rgba(255, 255, 255, 0.8);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .status-good { color: #4CAF50; }
+        .status-warning { color: #FF9800; }
+        .status-danger { color: #F44336; }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .pressure-value {
+                font-size: 2.5em;
+            }
+            
+            .location-input {
+                flex-direction: column;
+            }
+            
+            .location-input input, .location-input button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⛈️ พยากรณ์ความกดอากาศ</h1>
+            
+            <div class="cors-notice">
+                💡 <strong>สำคัญ:</strong> หากไม่สามารถโหลดข้อมูลได้ กรุณาไปที่ 
+                <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">cors-anywhere.herokuapp.com/corsdemo</a> 
+                และกดปุ่ม "Request temporary access" ก่อนใช้งาน
+            </div>
+            
+            <div class="location-input">
+                <input type="text" id="locationInput" placeholder="ใส่ชื่อเมือง (เช่น Bangkok, London, Tokyo)">
+                <button onclick="searchWeather()">🔍 ค้นหา</button>
+                <button onclick="getCurrentLocation()">📍 ตำแหน่งปัจจุบัน</button>
+            </div>
+            <div class="current-location" id="currentLocation"></div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            กำลังโหลดข้อมูล...
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="weatherData" style="display: none;">
+            <div class="current-pressure">
+                <h2>ความกดอากาศ ณ ขณะนี้</h2>
+                <div class="pressure-value" id="currentPressure">-</div>
+                <div class="pressure-unit">hPa</div>
+                <div id="pressureStatus" style="margin-top: 10px; font-weight: bold;"></div>
+                <div style="margin-top: 15px; opacity: 0.9; display: flex; justify-content: center; gap: 30px; flex-wrap: wrap;">
+                    <div>🌡️ <span id="currentTemp">-</span>°C</div>
+                    <div>💧 <span id="currentHumidity">-</span>%</div>
+                    <div>💨 <span id="currentWind">-</span> km/h</div>
+                </div>
+            </div>
+
+            <div class="forecast-section">
+                <h3>⏰ พยากรณ์รายชั่วโมง (24 ชั่วโมงข้างหน้า)</h3>
+                <div class="hourly-forecast" id="hourlyForecast"></div>
+            </div>
+
+            <div class="forecast-section">
+                <h3>📅 พยากรณ์รายวัน (5 วันข้างหน้า)</h3>
+                <div class="daily-forecast" id="dailyForecast"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = '511d57e91a9ca60a44bd189d78dfe9af';
+        const API_BASE = 'https://api.openweathermap.org/data/2.5';
+        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('weatherData').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.innerHTML = `❌ ${message}`;
+            errorDiv.style.display = 'block';
+            hideLoading();
+        }
+
+        function showWeatherData() {
+            document.getElementById('weatherData').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            hideLoading();
+        }
+
+        function getPressureStatus(pressure) {
+            if (pressure > 1020) return { text: '🔺 ความกดอากาศสูง', class: 'status-good' };
+            if (pressure < 1000) return { text: '🔻 ความกดอากาศต่ำ', class: 'status-danger' };
+            return { text: '➡️ ความกดอากาศปกติ', class: 'status-warning' };
+        }
+
+        async function fetchWeatherData(lat, lon, cityName = '') {
+            showLoading();
+            
+            try {
+                let currentData, forecastData;
+                
+                try {
+                    const currentResponse = await fetch(
+                        `${API_BASE}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=th`
+                    );
+                    const forecastResponse = await fetch(
+                        `${API_BASE}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=th`
+                    );
+                    
+                    if (currentResponse.ok && forecastResponse.ok) {
+                        currentData = await currentResponse.json();
+                        forecastData = await forecastResponse.json();
+                    } else {
+                        throw new Error('Direct API failed');
+                    }
+                } catch (directError) {
+                    console.log('ลองใช้ CORS proxy...');
+                    const currentResponse = await fetch(
+                        `${CORS_PROXY}${API_BASE}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=th`
+                    );
+                    const forecastResponse = await fetch(
+                        `${CORS_PROXY}${API_BASE}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=th`
+                    );
+
+                    if (!currentResponse.ok || !forecastResponse.ok) {
+                        throw new Error('ไม่สามารถดึงข้อมูลได้ กรุณาเปิดใช้งาน CORS proxy ตามคำแนะนำด้านบน');
+                    }
+
+                    currentData = await currentResponse.json();
+                    forecastData = await forecastResponse.json();
+                }
+
+                displayCurrentWeather(currentData);
+                displayHourlyForecast(forecastData.list.slice(0, 8));
+                displayDailyForecast(forecastData.list);
+                
+                showWeatherData();
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function displayCurrentWeather(data) {
+            document.getElementById('currentLocation').textContent = 
+                `📍 ${data.name}, ${data.sys.country}`;
+            document.getElementById('currentPressure').textContent = 
+                Math.round(data.main.pressure);
+            document.getElementById('currentTemp').textContent = 
+                Math.round(data.main.temp);
+            document.getElementById('currentHumidity').textContent = 
+                data.main.humidity;
+            document.getElementById('currentWind').textContent = 
+                Math.round(data.wind?.speed * 3.6 || 0);
+
+            const status = getPressureStatus(data.main.pressure);
+            const statusElement = document.getElementById('pressureStatus');
+            statusElement.textContent = status.text;
+            statusElement.className = status.class;
+        }
+
+        function displayHourlyForecast(hourlyData) {
+            const container = document.getElementById('hourlyForecast');
+            container.innerHTML = '';
+
+            hourlyData.forEach((hour, index) => {
+                const time = new Date(hour.dt * 1000);
+                const timeStr = time.getHours().toString().padStart(2, '0') + ':00';
+                
+                const hourItem = document.createElement('div');
+                hourItem.className = 'hourly-item';
+                hourItem.innerHTML = `
+                    <div style="font-weight: bold; margin-bottom: 5px;">${timeStr}</div>
+                    <div style="font-size: 0.9em; opacity: 0.8;">${getWeatherIcon(hour.weather[0].icon)}</div>
+                    <div style="margin: 8px 0; font-size: 1.2em; font-weight: bold;">
+                        ${Math.round(hour.main.pressure)} hPa
+                    </div>
+                    <div style="font-size: 0.9em; opacity: 0.8;">
+                        ${Math.round(hour.main.temp)}°C
+                    </div>
+                `;
+                container.appendChild(hourItem);
+            });
+        }
+
+        function displayDailyForecast(forecastData) {
+            const container = document.getElementById('dailyForecast');
+            container.innerHTML = '';
+
+            const dailyData = {};
+            forecastData.forEach(item => {
+                const date = new Date(item.dt * 1000);
+                const dateKey = date.toDateString();
+                
+                if (!dailyData[dateKey]) {
+                    dailyData[dateKey] = {
+                        date: date,
+                        pressures: [],
+                        temps: [],
+                        icons: [],
+                        items: []
+                    };
+                }
+                
+                dailyData[dateKey].pressures.push(item.main.pressure);
+                dailyData[dateKey].temps.push(item.main.temp);
+                dailyData[dateKey].icons.push(item.weather[0].icon);
+                dailyData[dateKey].items.push(item);
+            });
+
+            const days = Object.values(dailyData).slice(0, 5);
+            const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+            
+            days.forEach((day, index) => {
+                const dayName = index === 0 ? 'วันนี้' : 
+                               index === 1 ? 'พรุ่งนี้' : 
+                               dayNames[day.date.getDay()];
+                
+                const maxPressure = Math.max(...day.pressures);
+                const minPressure = Math.min(...day.pressures);
+                const maxTemp = Math.max(...day.temps);
+                const minTemp = Math.min(...day.temps);
+                const mostCommonIcon = day.icons[0]; // ใช้ไอคอนแรกของวัน
+                
+                const dailyItem = document.createElement('div');
+                dailyItem.className = 'daily-item';
+                dailyItem.innerHTML = `
+                    <div class="day-name">${dayName}</div>
+                    <div style="font-size: 0.9em; margin-bottom: 8px; opacity: 0.8;">
+                        ${day.date.getDate()}/${day.date.getMonth() + 1}
+                    </div>
+                    <div style="font-size: 1.5em; margin: 8px 0;">
+                        ${getWeatherIcon(mostCommonIcon)}
+                    </div>
+                    <div style="margin: 8px 0;">
+                        <strong>ความกดอากาศ</strong>
+                        <div class="high-low">
+                            <span style="color: #ff6b6b;">↑${Math.round(maxPressure)}</span>
+                            <span style="color: #4ecdc4;">↓${Math.round(minPressure)}</span>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.9em; opacity: 0.8;">
+                        🌡️ ${Math.round(minTemp)}° - ${Math.round(maxTemp)}°C
+                    </div>
+                `;
+                container.appendChild(dailyItem);
+            });
+        }
+
+        function getWeatherIcon(iconCode) {
+            const iconMap = {
+                '01d': '☀️', '01n': '🌙',
+                '02d': '⛅', '02n': '☁️',
+                '03d': '☁️', '03n': '☁️',
+                '04d': '☁️', '04n': '☁️',
+                '09d': '🌧️', '09n': '🌧️',
+                '10d': '🌦️', '10n': '🌧️',
+                '11d': '⛈️', '11n': '⛈️',
+                '13d': '❄️', '13n': '❄️',
+                '50d': '🌫️', '50n': '🌫️'
+            };
+            return iconMap[iconCode] || '🌤️';
+        }
+
+        async function searchWeather() {
+            const location = document.getElementById('locationInput').value.trim();
+            if (!location) {
+                showError('กรุณาใส่ชื่อเมือง');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                let response;
+                
+                try {
+                    response = await fetch(
+                        `${API_BASE}/weather?q=${location}&appid=${API_KEY}`
+                    );
+                    
+                    if (!response.ok) {
+                        throw new Error('Direct API failed');
+                    }
+                } catch (directError) {
+                    console.log('ลองใช้ CORS proxy สำหรับการค้นหา...');
+                    response = await fetch(
+                        `${CORS_PROXY}${API_BASE}/weather?q=${location}&appid=${API_KEY}`
+                    );
+                }
+
+                if (!response.ok) {
+                    throw new Error('ไม่พบเมืองที่ระบุ กรุณาตรวจสอบการสะกดชื่อเมือง');
+                }
+
+                const data = await response.json();
+                await fetchWeatherData(data.coord.lat, data.coord.lon, location);
+                document.getElementById('locationInput').value = '';
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        function getCurrentLocation() {
+            if (!navigator.geolocation) {
+                showError('เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง');
+                return;
+            }
+
+            showLoading();
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    await fetchWeatherData(lat, lon);
+                },
+                (error) => {
+                    let message = 'ไม่สามารถระบุตำแหน่งได้';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            message = 'การเข้าถึงตำแหน่งถูกปฏิเสธ กรุณาอนุญาตการเข้าถึงตำแหน่งในเบราว์เซอร์';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            message = 'ข้อมูลตำแหน่งไม่พร้อมใช้งาน';
+                            break;
+                        case error.TIMEOUT:
+                            message = 'หมดเวลาในการค้นหาตำแหน่ง กรุณาลองใหม่';
+                            break;
+                    }
+                    showError(message);
+                }
+            );
+        }
+
+        // Event listeners
+        document.getElementById('locationInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchWeather();
+            }
+        });
+
+        // เริ่มต้นด้วยกรุงเทพมหานคร
+        window.onload = () => {
+            fetchWeatherData(13.7563, 100.5018, 'Bangkok');
+        };
+    </script>
+</body>
+</html>
