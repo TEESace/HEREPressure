@@ -138,10 +138,39 @@
         }
 
         /* --- โค้ดใหม่ที่เพิ่มเข้ามา --- */
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
         .toggle-container {
             display: flex;
-            justify-content: flex-end; /* จัดปุ่มไปทางขวา */
-            margin-bottom: 10px;
+            align-items: center;
+        }
+        .toggle-button, .lang-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 5px;
+            border-radius: 5px;
+            transition: transform 0.2s;
+        }
+        .lang-button {
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+        .lang-button:hover {
+            opacity: 0.8;
+        }
+        .lang-button.active {
+            opacity: 1;
+            border: 1px solid var(--link-color);
+            padding: 4px;
+        }
+        .lang-icons {
+            display: flex;
+            gap: 5px;
         }
         .about-link {
             display: block;
@@ -153,19 +182,6 @@
         }
         .about-link:hover {
             text-decoration: underline;
-        }
-        .toggle-button {
-            background: none;
-            border: none;
-            color: var(--link-color);
-            cursor: pointer;
-            font-size: 1em;
-            padding: 5px;
-            border-radius: 50%;
-            transition: color 0.3s;
-        }
-        .toggle-button:hover {
-            color: var(--pressure-low-color);
         }
         /* --- จบส่วนโค้ดใหม่ --- */
 
@@ -179,7 +195,6 @@
             border: 1px solid var(--border-color);
             transition: background-color 0.3s, border-color 0.3s, color 0.3s;
         }
-        /* ... CSS ส่วนที่เหลือเหมือนเดิมทั้งหมด ... */
         .current-pressure h2 {
             font-size: 1.8em;
             margin-bottom: 15px;
@@ -319,27 +334,37 @@
 <body>
     <div class="container">
         <div class="header">
-            <div class="toggle-container">
-                <button id="themeToggle" class="toggle-button" onclick="toggleDarkMode()">
-                    <span id="themeIcon">🌙</span>
-                </button>
+            <div class="header-top">
+                <div class="lang-icons">
+                    <button class="lang-button" data-lang="th">🇹🇭</button>
+                    <button class="lang-button" data-lang="en">🇬🇧</button>
+                    <button class="lang-button" data-lang="ja">🇯🇵</button>
+                    <button class="lang-button" data-lang="zh">🇨🇳</button>
+                    <button class="lang-button" data-lang="es">🇪🇸</button>
+                </div>
+                <div class="toggle-container">
+                    <button id="themeToggle" class="toggle-button" onclick="toggleDarkMode()">
+                        <span id="themeIcon">🌙</span>
+                    </button>
+                </div>
             </div>
-            <h1>⛈️ พยากรณ์ความกดอากาศ</h1>
+            
+            <h1 id="app-title">⛈️ พยากรณ์ความกดอากาศ</h1>
             
             <div class="cors-notice">
-                💡 <strong>สำคัญ:</strong> หากไม่สามารถโหลดข้อมูลได้ กรุณาไปที่ 
-                <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">cors-anywhere.herokuapp.com/corsdemo</a> 
-                และกดปุ่ม "Request temporary access" ก่อนใช้งาน
+                <span id="cors-important">💡 <strong>สำคัญ:</strong></span> <span id="cors-message">หากไม่สามารถโหลดข้อมูลได้ กรุณาไปที่</span>
+                <a href="https://cors-anywhere.herokuapp.com/corsdemo" target="_blank">cors-anywhere.herokuapp.com/corsdemo</a>
+                <span id="cors-instruction">และกดปุ่ม "Request temporary access" ก่อนใช้งาน</span>
             </div>
             
             <div class="location-input">
                 <input type="text" id="locationInput" placeholder="ใส่ชื่อเมือง (เช่น Bangkok, London, Tokyo)">
-                <button onclick="searchWeather()">🔍 ค้นหา</button>
-                <button onclick="getCurrentLocation()">📍 ตำแหน่งปัจจุบัน</button>
+                <button id="search-button" onclick="searchWeather()">🔍 ค้นหา</button>
+                <button id="current-location-button" onclick="getCurrentLocation()">📍 ตำแหน่งปัจจุบัน</button>
             </div>
             <div class="current-location" id="currentLocation"></div>
             
-            <a href="about.html" class="about-link">เกี่ยวกับแอปพลิเคชัน</a>
+            <a href="about.html" class="about-link" id="about-link">เกี่ยวกับแอปพลิเคชัน</a>
         </div>
 
         <div id="loading" class="loading" style="display: none;">
@@ -348,7 +373,7 @@
         <div id="error" class="error" style="display: none;"></div>
         <div id="weatherData" style="display: none;">
             <div class="current-pressure">
-                <h2>ความกดอากาศ ณ ขณะนี้</h2>
+                <h2 id="current-pressure-title">ความกดอากาศ ณ ขณะนี้</h2>
                 <div class="pressure-value" id="currentPressure">-</div>
                 <div class="pressure-unit">hPa</div>
                 <div id="pressureStatus" style="margin-top: 10px; font-weight: bold;"></div>
@@ -359,11 +384,11 @@
                 </div>
             </div>
             <div class="forecast-section">
-                <h3>⏰ พยากรณ์รายชั่วโมง (24 ชั่วโมงข้างหน้า)</h3>
+                <h3 id="hourly-forecast-title">⏰ พยากรณ์รายชั่วโมง (24 ชั่วโมงข้างหน้า)</h3>
                 <div class="hourly-forecast" id="hourlyForecast"></div>
             </div>
             <div class="forecast-section">
-                <h3>📅 พยากรณ์รายวัน (5 วันข้างหน้า)</h3>
+                <h3 id="daily-forecast-title">📅 พยากรณ์รายวัน (5 วันข้างหน้า)</h3>
                 <div class="daily-forecast" id="dailyForecast"></div>
             </div>
         </div>
@@ -373,8 +398,187 @@
         const API_KEY = '511d57e91a9ca60a44bd189d78dfe9af';
         const API_BASE = 'https://api.openweathermap.org/data/2.5';
         const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
+        const langData = {
+            th: {
+                title: '⛈️ พยากรณ์ความกดอากาศ',
+                corsImportant: '💡 <strong>สำคัญ:</strong>',
+                corsMessage: 'หากไม่สามารถโหลดข้อมูลได้ กรุณาไปที่',
+                corsInstruction: 'และกดปุ่ม "Request temporary access" ก่อนใช้งาน',
+                inputPlaceholder: 'ใส่ชื่อเมือง (เช่น Bangkok, London, Tokyo)',
+                searchButton: '🔍 ค้นหา',
+                currentLocationButton: '📍 ตำแหน่งปัจจุบัน',
+                aboutLink: 'เกี่ยวกับแอปพลิเคชัน',
+                loading: 'กำลังโหลดข้อมูล...',
+                errorNoLocation: 'กรุณาใส่ชื่อเมือง',
+                errorFetch: 'ไม่สามารถดึงข้อมูลได้ กรุณาเปิดใช้งาน CORS proxy ตามคำแนะนำด้านบน',
+                errorNotFound: 'ไม่พบเมืองที่ระบุ กรุณาตรวจสอบการสะกดชื่อเมือง',
+                errorGeolocation: 'เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง',
+                errorPermissionDenied: 'การเข้าถึงตำแหน่งถูกปฏิเสธ กรุณาอนุญาตการเข้าถึงตำแหน่งในเบราว์เซอร์',
+                errorUnavailable: 'ข้อมูลตำแหน่งไม่พร้อมใช้งาน',
+                errorTimeout: 'หมดเวลาในการค้นหาตำแหน่ง กรุณาลองใหม่',
+                currentPressureTitle: 'ความกดอากาศ ณ ขณะนี้',
+                statusHigh: '🔺 ความกดอากาศสูง',
+                statusNormal: '➡️ ความกดอากาศปกติ',
+                statusLow: '🔻 ความกดอากาศต่ำ',
+                hourlyTitle: '⏰ พยากรณ์รายชั่วโมง (24 ชั่วโมงข้างหน้า)',
+                dailyTitle: '📅 พยากรณ์รายวัน (5 วันข้างหน้า)',
+                today: 'วันนี้',
+                tomorrow: 'พรุ่งนี้',
+                dayNames: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'],
+                pressureLabel: 'ความกดอากาศ',
+            },
+            en: {
+                title: '⛈️ Air Pressure Forecast',
+                corsImportant: '💡 <strong>Important:</strong>',
+                corsMessage: 'If data fails to load, please visit',
+                corsInstruction: 'and click "Request temporary access" before use.',
+                inputPlaceholder: 'Enter city name (e.g., Bangkok, London, Tokyo)',
+                searchButton: '🔍 Search',
+                currentLocationButton: '📍 Current Location',
+                aboutLink: 'About Application',
+                loading: 'Loading data...',
+                errorNoLocation: 'Please enter a city name',
+                errorFetch: 'Could not fetch data. Please enable the CORS proxy as instructed above.',
+                errorNotFound: 'City not found. Please check spelling.',
+                errorGeolocation: 'Your browser does not support geolocation.',
+                errorPermissionDenied: 'Location access denied. Please allow access in your browser.',
+                errorUnavailable: 'Location information is unavailable.',
+                errorTimeout: 'The request to get user location timed out.',
+                currentPressureTitle: 'Current Air Pressure',
+                statusHigh: '🔺 High Pressure',
+                statusNormal: '➡️ Normal Pressure',
+                statusLow: '🔻 Low Pressure',
+                hourlyTitle: '⏰ Hourly Forecast (24h)',
+                dailyTitle: '📅 Daily Forecast (5 Days)',
+                today: 'Today',
+                tomorrow: 'Tomorrow',
+                dayNames: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                pressureLabel: 'Air Pressure',
+            },
+            ja: {
+                title: '⛈️ 気圧予報',
+                corsImportant: '💡 <strong>重要:</strong>',
+                corsMessage: 'データの読み込みに失敗した場合は、',
+                corsInstruction: 'にアクセスし、"Request temporary access" ボタンをクリックしてください。',
+                inputPlaceholder: '都市名を入力 (例: Bangkok, London, Tokyo)',
+                searchButton: '🔍 検索',
+                currentLocationButton: '📍 現在地',
+                aboutLink: 'アプリについて',
+                loading: 'データを読み込み中...',
+                errorNoLocation: '都市名を入力してください',
+                errorFetch: 'データを取得できません。上記のCORSプロキシを有効にしてください',
+                errorNotFound: '都市が見つかりません。スペルを確認してください',
+                errorGeolocation: 'お使いのブラウザは位置情報をサポートしていません',
+                errorPermissionDenied: '位置情報へのアクセスが拒否されました。ブラウザでアクセスを許可してください',
+                errorUnavailable: '位置情報が利用できません',
+                errorTimeout: '位置情報の検索がタイムアウトしました',
+                currentPressureTitle: '現在の気圧',
+                statusHigh: '🔺 高気圧',
+                statusNormal: '➡️ 通常の気圧',
+                statusLow: '🔻 低気圧',
+                hourlyTitle: '⏰ 時間別予報 (24時間)',
+                dailyTitle: '📅 日別予報 (5日間)',
+                today: '今日',
+                tomorrow: '明日',
+                dayNames: ['日', '月', '火', '水', '木', '金', '土'],
+                pressureLabel: '気圧',
+            },
+            zh: {
+                title: '⛈️ 气压预报',
+                corsImportant: '💡 <strong>重要提示:</strong>',
+                corsMessage: '如果数据加载失败，请访问',
+                corsInstruction: '并点击“Request temporary access”按钮，然后重试。',
+                inputPlaceholder: '输入城市名称 (例如: Bangkok, London, Tokyo)',
+                searchButton: '🔍 搜索',
+                currentLocationButton: '📍 当前位置',
+                aboutLink: '关于应用程序',
+                loading: '正在加载数据...',
+                errorNoLocation: '请输入城市名称',
+                errorFetch: '无法获取数据。请按照上述说明启用CORS代理',
+                errorNotFound: '未找到该城市。请检查拼写',
+                errorGeolocation: '您的浏览器不支持地理定位',
+                errorPermissionDenied: '位置访问被拒绝。请在浏览器中允许访问',
+                errorUnavailable: '位置信息不可用',
+                errorTimeout: '获取位置信息超时。请重试',
+                currentPressureTitle: '当前气压',
+                statusHigh: '🔺 高气压',
+                statusNormal: '➡️ 正常气压',
+                statusLow: '🔻 低气压',
+                hourlyTitle: '⏰ 每小时预报 (24小时)',
+                dailyTitle: '📅 每日预报 (5天)',
+                today: '今天',
+                tomorrow: '明天',
+                dayNames: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
+                pressureLabel: '气压',
+            },
+            es: {
+                title: '⛈️ Pronóstico de Presión Atmosférica',
+                corsImportant: '💡 <strong>Importante:</strong>',
+                corsMessage: 'Si los datos no se cargan, por favor, visite',
+                corsInstruction: 'y haga clic en "Request temporary access" antes de usar.',
+                inputPlaceholder: 'Introduce el nombre de la ciudad (ej: Bangkok, London, Tokyo)',
+                searchButton: '🔍 Buscar',
+                currentLocationButton: '📍 Ubicación Actual',
+                aboutLink: 'Acerca de la aplicación',
+                loading: 'Cargando datos...',
+                errorNoLocation: 'Por favor, introduce el nombre de una ciudad',
+                errorFetch: 'No se pudieron obtener los datos. Por favor, habilite el proxy CORS como se indica arriba.',
+                errorNotFound: 'Ciudad no encontrada. Por favor, compruebe la ortografía.',
+                errorGeolocation: 'Tu navegador no soporta la geolocalización.',
+                errorPermissionDenied: 'Acceso a la ubicación denegado. Por favor, permite el acceso en tu navegador.',
+                errorUnavailable: 'La información de ubicación no está disponible.',
+                errorTimeout: 'Se agotó el tiempo de espera para obtener la ubicación.',
+                currentPressureTitle: 'Presión Atmosférica Actual',
+                statusHigh: '🔺 Alta Presión',
+                statusNormal: '➡️ Presión Normal',
+                statusLow: '🔻 Baja Presión',
+                hourlyTitle: '⏰ Pronóstico por hora (24h)',
+                dailyTitle: '📅 Pronóstico diario (5 días)',
+                today: 'Hoy',
+                tomorrow: 'Mañana',
+                dayNames: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+                pressureLabel: 'Presión',
+            },
+        };
 
-        // --- เพิ่มฟังก์ชัน Dark Mode และเรียกใช้เมื่อโหลดหน้าเว็บ ---
+        let currentLang = 'th';
+
+        function applyLanguage(lang) {
+            const data = langData[lang];
+            if (!data) return;
+
+            document.getElementById('app-title').textContent = data.title;
+            document.getElementById('cors-important').innerHTML = data.corsImportant;
+            document.getElementById('cors-message').textContent = data.corsMessage;
+            document.getElementById('cors-instruction').textContent = data.corsInstruction;
+            document.getElementById('locationInput').placeholder = data.inputPlaceholder;
+            document.getElementById('search-button').textContent = data.searchButton;
+            document.getElementById('current-location-button').textContent = data.currentLocationButton;
+            document.getElementById('about-link').textContent = data.aboutLink;
+            document.getElementById('loading').textContent = data.loading;
+            document.getElementById('current-pressure-title').textContent = data.currentPressureTitle;
+            document.getElementById('hourly-forecast-title').textContent = data.hourlyTitle;
+            document.getElementById('daily-forecast-title').textContent = data.dailyTitle;
+
+            // Update pressure status text
+            const pressureStatusElement = document.getElementById('pressureStatus');
+            if (pressureStatusElement.textContent) {
+                const pressure = parseFloat(document.getElementById('currentPressure').textContent);
+                if (!isNaN(pressure)) {
+                    const status = getPressureStatus(pressure);
+                    pressureStatusElement.textContent = data[status.text];
+                }
+            }
+            
+            // Update the HTML lang attribute
+            document.documentElement.lang = lang;
+
+            // Highlight the active language button
+            document.querySelectorAll('.lang-button').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.lang === lang);
+            });
+        }
+
         function toggleDarkMode() {
             const body = document.body;
             body.classList.toggle('dark-mode');
@@ -383,7 +587,7 @@
             document.getElementById('themeIcon').textContent = isDarkMode ? '☀️' : '🌙';
         }
 
-        function loadTheme() {
+        function loadThemeAndLang() {
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
@@ -392,8 +596,11 @@
                 document.body.classList.remove('dark-mode');
                 document.getElementById('themeIcon').textContent = '🌙';
             }
+
+            const storedLang = localStorage.getItem('lang') || 'th';
+            currentLang = storedLang;
+            applyLanguage(currentLang);
         }
-        // --- จบส่วน Dark Mode ---
 
         function showLoading() {
             document.getElementById('loading').style.display = 'block';
@@ -405,8 +612,9 @@
             document.getElementById('loading').style.display = 'none';
         }
 
-        function showError(message) {
+        function showError(messageKey) {
             const errorDiv = document.getElementById('error');
+            const message = langData[currentLang][messageKey];
             errorDiv.innerHTML = `❌ ${message}`;
             errorDiv.style.display = 'block';
             hideLoading();
@@ -419,9 +627,9 @@
         }
 
         function getPressureStatus(pressure) {
-            if (pressure > 1020) return { text: '🔺 ความกดอากาศสูง', class: 'status-good' };
-            if (pressure < 1000) return { text: '🔻 ความกดอากาศต่ำ', class: 'status-danger' };
-            return { text: '➡️ ความกดอากาศปกติ', class: 'status-warning' };
+            if (pressure > 1020) return { text: 'statusHigh', class: 'status-good' };
+            if (pressure < 1000) return { text: 'statusLow', class: 'status-danger' };
+            return { text: 'statusNormal', class: 'status-warning' };
         }
 
         async function fetchWeatherData(lat, lon, cityName = '') {
@@ -429,13 +637,14 @@
             
             try {
                 let currentData, forecastData;
+                const langCode = currentLang === 'zh' ? 'zh_cn' : currentLang; // Adjust for Chinese
                 
                 try {
                     const currentResponse = await fetch(
-                        `${API_BASE}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=th`
+                        `${API_BASE}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${langCode}`
                     );
                     const forecastResponse = await fetch(
-                        `${API_BASE}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=th`
+                        `${API_BASE}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${langCode}`
                     );
                     
                     if (currentResponse.ok && forecastResponse.ok) {
@@ -445,16 +654,16 @@
                         throw new Error('Direct API failed');
                     }
                 } catch (directError) {
-                    console.log('ลองใช้ CORS proxy...');
+                    console.log('Using CORS proxy...');
                     const currentResponse = await fetch(
-                        `${CORS_PROXY}${API_BASE}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=th`
+                        `${CORS_PROXY}${API_BASE}/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${langCode}`
                     );
                     const forecastResponse = await fetch(
-                        `${CORS_PROXY}${API_BASE}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=th`
+                        `${CORS_PROXY}${API_BASE}/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=${langCode}`
                     );
 
                     if (!currentResponse.ok || !forecastResponse.ok) {
-                        throw new Error('ไม่สามารถดึงข้อมูลได้ กรุณาเปิดใช้งาน CORS proxy ตามคำแนะนำด้านบน');
+                        throw new Error('CORS_ERROR');
                     }
 
                     currentData = await currentResponse.json();
@@ -467,7 +676,11 @@
                 
                 showWeatherData();
             } catch (error) {
-                showError(error.message);
+                if (error.message === 'CORS_ERROR') {
+                    showError('errorFetch');
+                } else {
+                    showError('errorNotFound');
+                }
             }
         }
 
@@ -485,7 +698,7 @@
 
             const status = getPressureStatus(data.main.pressure);
             const statusElement = document.getElementById('pressureStatus');
-            statusElement.textContent = status.text;
+            statusElement.textContent = langData[currentLang][status.text];
             statusElement.className = status.class;
         }
 
@@ -537,12 +750,31 @@
             });
 
             const days = Object.values(dailyData).slice(0, 5);
-            const dayNames = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+            const dayNames = langData[currentLang].dayNames;
             
             days.forEach((day, index) => {
-                const dayName = index === 0 ? 'วันนี้' : 
-                                index === 1 ? 'พรุ่งนี้' : 
-                                dayNames[day.date.getDay()];
+                let dayName;
+                if (currentLang === 'th') {
+                    dayName = index === 0 ? 'วันนี้' : 
+                              index === 1 ? 'พรุ่งนี้' : 
+                              dayNames[day.date.getDay()];
+                } else if (currentLang === 'en') {
+                    dayName = index === 0 ? 'Today' : 
+                              index === 1 ? 'Tomorrow' : 
+                              dayNames[day.date.getDay()];
+                } else if (currentLang === 'ja') {
+                    dayName = index === 0 ? '今日' : 
+                              index === 1 ? '明日' : 
+                              dayNames[day.date.getDay()];
+                } else if (currentLang === 'zh') {
+                    dayName = index === 0 ? '今天' : 
+                              index === 1 ? '明天' : 
+                              dayNames[day.date.getDay()];
+                } else if (currentLang === 'es') {
+                    dayName = index === 0 ? 'Hoy' : 
+                              index === 1 ? 'Mañana' : 
+                              dayNames[day.date.getDay()];
+                }
                 
                 const maxPressure = Math.max(...day.pressures);
                 const minPressure = Math.min(...day.pressures);
@@ -566,7 +798,7 @@
                         ${getWeatherIcon(mostCommonIcon)}
                     </div>
                     <div style="margin: 8px 0;">
-                        <strong>ความกดอากาศ</strong>
+                        <strong>${langData[currentLang].pressureLabel}</strong>
                         <div class="high-low">
                             <span class="high-pressure">↑${Math.round(maxPressure)}</span>
                             <span class="low-pressure">↓${Math.round(minPressure)}</span>
@@ -598,7 +830,7 @@
         async function searchWeather() {
             const location = document.getElementById('locationInput').value.trim();
             if (!location) {
-                showError('กรุณาใส่ชื่อเมือง');
+                showError('errorNoLocation');
                 return;
             }
 
@@ -616,27 +848,31 @@
                         throw new Error('Direct API failed');
                     }
                 } catch (directError) {
-                    console.log('ลองใช้ CORS proxy สำหรับการค้นหา...');
+                    console.log('Using CORS proxy for search...');
                     response = await fetch(
                         `${CORS_PROXY}${API_BASE}/weather?q=${location}&appid=${API_KEY}`
                     );
                 }
 
                 if (!response.ok) {
-                    throw new Error('ไม่พบเมืองที่ระบุ กรุณาตรวจสอบการสะกดชื่อเมือง');
+                    throw new Error('NOT_FOUND');
                 }
 
                 const data = await response.json();
                 await fetchWeatherData(data.coord.lat, data.coord.lon, location);
                 document.getElementById('locationInput').value = '';
             } catch (error) {
-                showError(error.message);
+                if (error.message === 'NOT_FOUND') {
+                    showError('errorNotFound');
+                } else {
+                    showError('errorFetch');
+                }
             }
         }
 
         function getCurrentLocation() {
             if (!navigator.geolocation) {
-                showError('เบราว์เซอร์ของคุณไม่รองรับการระบุตำแหน่ง');
+                showError('errorGeolocation');
                 return;
             }
 
@@ -649,19 +885,19 @@
                     await fetchWeatherData(lat, lon);
                 },
                 (error) => {
-                    let message = 'ไม่สามารถระบุตำแหน่งได้';
+                    let messageKey = 'errorGeolocation';
                     switch(error.code) {
                         case error.PERMISSION_DENIED:
-                            message = 'การเข้าถึงตำแหน่งถูกปฏิเสธ กรุณาอนุญาตการเข้าถึงตำแหน่งในเบราว์เซอร์';
+                            messageKey = 'errorPermissionDenied';
                             break;
                         case error.POSITION_UNAVAILABLE:
-                            message = 'ข้อมูลตำแหน่งไม่พร้อมใช้งาน';
+                            messageKey = 'errorUnavailable';
                             break;
                         case error.TIMEOUT:
-                            message = 'หมดเวลาในการค้นหาตำแหน่ง กรุณาลองใหม่';
+                            messageKey = 'errorTimeout';
                             break;
                     }
-                    showError(message);
+                    showError(messageKey);
                 }
             );
         }
@@ -672,8 +908,24 @@
             }
         });
 
+        document.querySelectorAll('.lang-button').forEach(button => {
+            button.addEventListener('click', () => {
+                currentLang = button.dataset.lang;
+                localStorage.setItem('lang', currentLang);
+                applyLanguage(currentLang);
+                
+                // Re-fetch weather data in new language if data is already displayed
+                const weatherDataElement = document.getElementById('weatherData');
+                if (weatherDataElement.style.display !== 'none' && !weatherDataElement.classList.contains('initial-load')) {
+                    const lat = JSON.parse(localStorage.getItem('last-coords')).lat;
+                    const lon = JSON.parse(localStorage.getItem('last-coords')).lon;
+                    fetchWeatherData(lat, lon);
+                }
+            });
+        });
+
         window.onload = () => {
-            loadTheme(); // เรียกใช้ฟังก์ชันเพื่อโหลดธีมที่ผู้ใช้ตั้งค่าไว้
+            loadThemeAndLang(); // เรียกใช้ฟังก์ชันเพื่อโหลดธีมและภาษาที่ผู้ใช้ตั้งค่าไว้
             fetchWeatherData(13.7563, 100.5018, 'Bangkok');
         };
     </script>
