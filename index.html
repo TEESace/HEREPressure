@@ -5,126 +5,125 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>แอปพยากรณ์ความกดอากาศ</title>
     <style>
+        /* CSS ทั้งหมดเหมือนเดิม... */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f7f9; /* เปลี่ยนพื้นหลังเป็นสีขาวนวล */
-            color: #333; /* เปลี่ยนสีตัวอักษรหลักเป็นสีเทาเข้ม */
+            background-color: #f4f7f9;
+            color: #333;
             min-height: 100vh;
             padding: 20px;
         }
-
         .container {
             max-width: 800px;
             margin: 0 auto;
-            background: #ffffff; /* เปลี่ยนพื้นหลัง container เป็นสีขาว */
+            background: #ffffff;
             border-radius: 20px;
             padding: 30px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1); /* ปรับเงาให้เข้ากับพื้นหลังขาว */
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
             border: 1px solid #e0e0e0;
         }
-
         .header {
             text-align: center;
             margin-bottom: 30px;
         }
-
         .header h1 {
-            color: #333; /* เปลี่ยนสีหัวข้อ */
+            color: #333;
             font-size: 2.5em;
             margin-bottom: 10px;
         }
-
         .cors-notice {
             margin: 10px 0;
             padding: 15px;
-            background: rgba(255, 229, 100, 0.3); /* ปรับสีพื้นหลังประกาศ */
+            background: rgba(255, 229, 100, 0.3);
             border: 1px solid rgba(255, 193, 7, 0.4);
             border-radius: 10px;
-            color: #555; /* ปรับสีข้อความประกาศ */
+            color: #555;
             font-size: 0.9em;
             text-align: center;
         }
-
         .cors-notice a {
             color: #d68910;
             text-decoration: none;
             font-weight: bold;
         }
-
         .cors-notice a:hover {
             text-decoration: underline;
         }
-
         .location-input {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
             flex-wrap: wrap;
         }
-
         .location-input input {
             flex: 1;
             min-width: 200px;
             padding: 12px;
-            border: 1px solid #ccc; /* เพิ่มเส้นขอบ */
+            border: 1px solid #ccc;
             border-radius: 10px;
-            background: #ffffff; /* เปลี่ยนพื้นหลังช่องค้นหา */
-            color: #333; /* เปลี่ยนสีตัวอักษร */
+            background: #ffffff;
+            color: #333;
         }
-
         .location-input input::placeholder {
             color: #999;
         }
-
         .location-input button {
             padding: 12px 20px;
             border: none;
             border-radius: 10px;
-            background: #3498db; /* เปลี่ยนสีพื้นหลังปุ่ม */
-            color: white; /* เปลี่ยนสีข้อความปุ่ม */
+            background: #3498db;
+            color: white;
             cursor: pointer;
             transition: all 0.3s;
             white-space: nowrap;
         }
-
         .location-input button:hover {
             background: #2980b9;
             transform: translateY(-2px);
         }
+        
+        /* --- โค้ดใหม่ที่เพิ่มเข้ามา --- */
+        .about-link {
+            display: block;
+            margin-top: 15px;
+            color: #3498db;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        .about-link:hover {
+            text-decoration: underline;
+        }
+        /* --- จบส่วนโค้ดใหม่ --- */
 
         .current-pressure {
-            background: #f9f9f9; /* เปลี่ยนพื้นหลังส่วนแสดงผลหลัก */
+            background: #f9f9f9;
             border-radius: 15px;
             padding: 25px;
             text-align: center;
             margin-bottom: 30px;
-            color: #333; /* เปลี่ยนสีข้อความ */
+            color: #333;
             border: 1px solid #eee;
         }
-
+        /* ... CSS ส่วนที่เหลือเหมือนเดิมทั้งหมด ... */
         .current-pressure h2 {
             font-size: 1.8em;
             margin-bottom: 15px;
         }
-
         .pressure-value {
             font-size: 3em;
             font-weight: bold;
             margin: 10px 0;
             color: #2c3e50;
         }
-
         .pressure-unit {
             font-size: 1.2em;
             opacity: 0.8;
         }
-
         .forecast-section {
             background: #ffffff;
             border-radius: 15px;
@@ -133,96 +132,81 @@
             color: #333;
             border: 1px solid #e9e9e9;
         }
-
         .forecast-section h3 {
             font-size: 1.5em;
             margin-bottom: 15px;
             text-align: center;
         }
-
         .hourly-forecast, .daily-forecast {
             display: grid;
             gap: 15px;
             margin-bottom: 10px;
         }
-
         .hourly-forecast {
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
         }
-
         .daily-forecast {
             grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
         }
-
         .hourly-item, .daily-item {
-            background: #f9f9f9; /* เปลี่ยนสีพื้นหลังการ์ดพยากรณ์ */
+            background: #f9f9f9;
             border-radius: 10px;
             padding: 15px;
             text-align: center;
             transition: transform 0.3s, box-shadow 0.3s;
             border: 1px solid #eee;
         }
-
         .hourly-item:hover, .daily-item:hover {
             transform: translateY(-5px);
             background: #fff;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
-
         .day-name {
             font-weight: bold;
             margin-bottom: 8px;
         }
-
         .high-low {
             display: flex;
             justify-content: space-around;
             margin-top: 5px;
         }
-
         .loading {
             text-align: center;
-            color: #555; /* เปลี่ยนสีข้อความ loading */
+            color: #555;
             font-size: 1.2em;
             padding: 40px;
         }
-
         .loading::after {
             content: '';
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 2px solid rgba(0,0,0,0.1); /* ปรับสีวงกลม loading */
+            border: 2px solid rgba(0,0,0,0.1);
             border-radius: 50%;
-            border-top-color: #333; /* ปรับสีวงกลม loading */
+            border-top-color: #333;
             animation: spin 1s ease-in-out infinite;
             margin-left: 10px;
         }
-
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-
         .error {
-            background: rgba(255, 0, 0, 0.1); /* ปรับสีพื้นหลัง error */
+            background: rgba(255, 0, 0, 0.1);
             border: 1px solid rgba(255, 0, 0, 0.2);
             border-radius: 10px;
             padding: 15px;
-            color: #D8000C; /* ปรับสีข้อความ error */
+            color: #D8000C;
             text-align: center;
             margin: 10px 0;
         }
-
         .current-location {
             color: #555;
             text-align: center;
             margin-bottom: 10px;
         }
-
         .status-good { color: #27ae60; }
         .status-warning { color: #f39c12; }
         .status-danger { color: #c0392b; }
-
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -260,14 +244,14 @@
                 <button onclick="getCurrentLocation()">📍 ตำแหน่งปัจจุบัน</button>
             </div>
             <div class="current-location" id="currentLocation"></div>
-        </div>
+            
+            <a href="about.html" class="about-link">เกี่ยวกับแอปพลิเคชัน</a>
+            </div>
 
         <div id="loading" class="loading" style="display: none;">
             กำลังโหลดข้อมูล...
         </div>
-
         <div id="error" class="error" style="display: none;"></div>
-
         <div id="weatherData" style="display: none;">
             <div class="current-pressure">
                 <h2>ความกดอากาศ ณ ขณะนี้</h2>
@@ -280,12 +264,10 @@
                     <div>💨 <span id="currentWind">-</span> km/h</div>
                 </div>
             </div>
-
             <div class="forecast-section">
                 <h3>⏰ พยากรณ์รายชั่วโมง (24 ชั่วโมงข้างหน้า)</h3>
                 <div class="hourly-forecast" id="hourlyForecast"></div>
             </div>
-
             <div class="forecast-section">
                 <h3>📅 พยากรณ์รายวัน (5 วันข้างหน้า)</h3>
                 <div class="daily-forecast" id="dailyForecast"></div>
@@ -453,7 +435,7 @@
                 const minPressure = Math.min(...day.pressures);
                 const maxTemp = Math.max(...day.temps);
                 const minTemp = Math.min(...day.temps);
-                const mostCommonIcon = day.icons[0]; // ใช้ไอคอนแรกของวัน
+                const mostCommonIcon = day.icons[0];
                 
                 const dailyItem = document.createElement('div');
                 dailyItem.className = 'daily-item';
@@ -566,14 +548,12 @@
             );
         }
 
-        // Event listeners
         document.getElementById('locationInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 searchWeather();
             }
         });
 
-        // เริ่มต้นด้วยกรุงเทพมหานคร
         window.onload = () => {
             fetchWeatherData(13.7563, 100.5018, 'Bangkok');
         };
