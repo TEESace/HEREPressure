@@ -311,6 +311,15 @@
         .high-low .high-pressure { color: var(--pressure-high-color); }
         .high-low .low-pressure { color: var(--pressure-low-color); }
 
+        /* --- CSS สำหรับ Iframe ที่เพิ่มเข้ามา --- */
+        #tmd-iframe {
+            width: 100%;
+            height: 400px; /* ความสูงตามที่ виджет กำหนด */
+            border-radius: 10px; /* ทำให้ขอบมนเข้ากับดีไซน์ */
+            border: 1px solid var(--border-color);
+            margin-top: 10px;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px;
@@ -391,6 +400,12 @@
                 <h3 id="daily-forecast-title">📅 พยากรณ์รายวัน (5 วันข้างหน้า)</h3>
                 <div class="daily-forecast" id="dailyForecast"></div>
             </div>
+            
+            <div class="forecast-section" id="tmd-section" style="display: none;">
+                 <h3 id="tmd-forecast-title">🇹🇭 พยากรณ์ 7 วัน (กรมอุตุฯ)</h3>
+                 <iframe id="tmd-iframe" src="https://www.tmd.go.th/weatherForecast7DaysWidget?province=กรุงเทพมหานคร" scrolling="no" frameborder="0"></iframe>
+            </div>
+
         </div>
     </div>
 
@@ -398,6 +413,18 @@
         const API_KEY = '511d57e91a9ca60a44bd189d78dfe9af';
         const API_BASE = 'https://api.openweathermap.org/data/2.5';
         const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
+
+        // --- เพิ่ม mapping สำหรับจังหวัดในไทย ---
+        const thaiProvinces = {
+            'bangkok': 'กรุงเทพมหานคร',
+            'chiang mai': 'เชียงใหม่',
+            'phuket': 'ภูเก็ต',
+            'khon kaen': 'ขอนแก่น',
+            'chon buri': 'ชลบุรี',
+            'songkhla': 'สงขลา',
+            'pattaya': 'ชลบุรี' // พัทยาอยู่ในชลบุรี
+        };
+
         const langData = {
             th: {
                 title: '⛈️ พยากรณ์ความกดอากาศ',
@@ -425,7 +452,8 @@
                 today: 'วันนี้',
                 tomorrow: 'พรุ่งนี้',
                 dayNames: ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'],
-                pressureLabel: 'ความกดอากาศ',
+                pressureLabel: 'ความกด',
+                tmdForecastTitle: '🇹🇭 พยากรณ์ 7 วัน (กรมอุตุฯ)', // เพิ่มข้อความใหม่
             },
             en: {
                 title: '⛈️ Air Pressure Forecast',
@@ -453,7 +481,8 @@
                 today: 'Today',
                 tomorrow: 'Tomorrow',
                 dayNames: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-                pressureLabel: 'Air Pressure',
+                pressureLabel: 'Pressure',
+                tmdForecastTitle: '🇹🇭 7-Day Forecast (TMD)', // เพิ่มข้อความใหม่
             },
             ja: {
                 title: '⛈️ 気圧予報',
@@ -482,6 +511,7 @@
                 tomorrow: '明日',
                 dayNames: ['日', '月', '火', '水', '木', '金', '土'],
                 pressureLabel: '気圧',
+                tmdForecastTitle: '🇹🇭 7日間予報 (TMD)', // เพิ่มข้อความใหม่
             },
             zh: {
                 title: '⛈️ 气压预报',
@@ -510,6 +540,7 @@
                 tomorrow: '明天',
                 dayNames: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
                 pressureLabel: '气压',
+                tmdForecastTitle: '🇹🇭 7天预报 (TMD)', // เพิ่มข้อความใหม่
             },
             es: {
                 title: '⛈️ Pronóstico de Presión Atmosférica',
@@ -538,10 +569,12 @@
                 tomorrow: 'Mañana',
                 dayNames: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
                 pressureLabel: 'Presión',
+                tmdForecastTitle: '🇹🇭 Pronóstico de 7 días (TMD)', // เพิ่มข้อความใหม่
             },
         };
 
         let currentLang = 'th';
+        let lastCoords = { lat: 13.7563, lon: 100.5018 }; // Default to Bangkok
 
         function applyLanguage(lang) {
             const data = langData[lang];
@@ -552,13 +585,14 @@
             document.getElementById('cors-message').textContent = data.corsMessage;
             document.getElementById('cors-instruction').textContent = data.corsInstruction;
             document.getElementById('locationInput').placeholder = data.inputPlaceholder;
-            document.getElementById('search-button').textContent = data.searchButton;
-            document.getElementById('current-location-button').textContent = data.currentLocationButton;
+            document.getElementById('search-button').innerHTML = data.searchButton;
+            document.getElementById('current-location-button').innerHTML = data.currentLocationButton;
             document.getElementById('about-link').textContent = data.aboutLink;
             document.getElementById('loading').textContent = data.loading;
             document.getElementById('current-pressure-title').textContent = data.currentPressureTitle;
             document.getElementById('hourly-forecast-title').textContent = data.hourlyTitle;
             document.getElementById('daily-forecast-title').textContent = data.dailyTitle;
+            document.getElementById('tmd-forecast-title').textContent = data.tmdForecastTitle; // อัปเดตข้อความใหม่
 
             // Update pressure status text
             const pressureStatusElement = document.getElementById('pressureStatus');
@@ -570,10 +604,8 @@
                 }
             }
             
-            // Update the HTML lang attribute
             document.documentElement.lang = lang;
 
-            // Highlight the active language button
             document.querySelectorAll('.lang-button').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.lang === lang);
             });
@@ -614,7 +646,7 @@
 
         function showError(messageKey) {
             const errorDiv = document.getElementById('error');
-            const message = langData[currentLang][messageKey];
+            const message = langData[currentLang][messageKey] || 'An unknown error occurred';
             errorDiv.innerHTML = `❌ ${message}`;
             errorDiv.style.display = 'block';
             hideLoading();
@@ -632,12 +664,28 @@
             return { text: 'statusNormal', class: 'status-warning' };
         }
 
-        async function fetchWeatherData(lat, lon, cityName = '') {
+        function getWeatherIcon(iconCode) {
+            const iconMap = {
+                '01d': '☀️', '01n': '🌙',
+                '02d': '🌤️', '02n': '🌥️',
+                '03d': '☁️', '03n': '☁️',
+                '04d': '☁️', '04n': '☁️',
+                '09d': '🌦️', '09n': '🌦️',
+                '10d': '🌧️', '10n': '🌧️',
+                '11d': '⛈️', '11n': '⛈️',
+                '13d': '❄️', '13n': '❄️',
+                '50d': '🌫️', '50n': '🌫️',
+            };
+            return iconMap[iconCode] || '❓';
+        }
+        
+        async function fetchWeatherData(lat, lon) {
             showLoading();
+            lastCoords = { lat, lon }; // Save the last successful coordinates
             
             try {
                 let currentData, forecastData;
-                const langCode = currentLang === 'zh' ? 'zh_cn' : currentLang; // Adjust for Chinese
+                const langCode = currentLang === 'zh' ? 'zh_cn' : currentLang;
                 
                 try {
                     const currentResponse = await fetch(
@@ -683,9 +731,68 @@
                 }
             }
         }
+        
+        async function searchWeather() {
+            const location = document.getElementById('locationInput').value.trim();
+            if (!location) {
+                showError('errorNoLocation');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                let geoData;
+                // Use the CORS proxy for geocoding by default to avoid mixed content issues and improve reliability
+                const geoResponse = await fetch(
+                    `${CORS_PROXY}http://api.openweathermap.org/geo/1.0/direct?q=${location}&limit=1&appid=${API_KEY}`
+                );
+
+                if (!geoResponse.ok) {
+                     throw new Error('CORS_ERROR');
+                }
+                
+                geoData = await geoResponse.json();
+                
+                if (geoData.length > 0) {
+                    const { lat, lon } = geoData[0];
+                    await fetchWeatherData(lat, lon);
+                } else {
+                    showError('errorNotFound');
+                }
+            } catch (error) {
+                 if (error.message === 'CORS_ERROR') {
+                     showError('errorFetch');
+                 } else {
+                     showError('errorNotFound');
+                 }
+            }
+        }
+
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                showLoading();
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        fetchWeatherData(latitude, longitude);
+                    },
+                    (error) => {
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED: showError('errorPermissionDenied'); break;
+                            case error.POSITION_UNAVAILABLE: showError('errorUnavailable'); break;
+                            case error.TIMEOUT: showError('errorTimeout'); break;
+                            default: showError('errorGeolocation'); break;
+                        }
+                    }
+                );
+            } else {
+                showError('errorGeolocation');
+            }
+        }
 
         function displayCurrentWeather(data) {
-            document.getElementById('currentLocation').textContent = 
+            document.getElementById('currentLocation').textContent =  
                 `📍 ${data.name}, ${data.sys.country}`;
             document.getElementById('currentPressure').textContent = 
                 Math.round(data.main.pressure);
@@ -700,13 +807,26 @@
             const statusElement = document.getElementById('pressureStatus');
             statusElement.textContent = langData[currentLang][status.text];
             statusElement.className = status.class;
+
+            // --- ส่วนควบคุมการแสดงผลของ iframe กรมอุตุฯ ---
+            const cityNameLower = (data.name || '').toLowerCase();
+            const thaiProvinceName = thaiProvinces[cityNameLower];
+            const tmdSection = document.getElementById('tmd-section');
+            const tmdIframe = document.getElementById('tmd-iframe');
+
+            if (thaiProvinceName) {
+                tmdIframe.src = `https://www.tmd.go.th/weatherForecast7DaysWidget?province=${thaiProvinceName}`;
+                tmdSection.style.display = 'block'; // แสดงส่วนนี้
+            } else {
+                tmdSection.style.display = 'none'; // ซ่อนถ้าไม่ใช่จังหวัดที่รองรับ
+            }
         }
 
         function displayHourlyForecast(hourlyData) {
             const container = document.getElementById('hourlyForecast');
             container.innerHTML = '';
 
-            hourlyData.forEach((hour, index) => {
+            hourlyData.forEach((hour) => {
                 const time = new Date(hour.dt * 1000);
                 const timeStr = time.getHours().toString().padStart(2, '0') + ':00';
                 
@@ -732,12 +852,11 @@
 
             const dailyData = {};
             forecastData.forEach(item => {
-                const date = new Date(item.dt * 1000);
-                const dateKey = date.toDateString();
+                const dateKey = new Date(item.dt * 1000).toDateString();
                 
                 if (!dailyData[dateKey]) {
                     dailyData[dateKey] = {
-                        date: date,
+                        date: new Date(item.dt * 1000),
                         pressures: [],
                         temps: [],
                         icons: []
@@ -750,184 +869,63 @@
             });
 
             const days = Object.values(dailyData).slice(0, 5);
-            const dayNames = langData[currentLang].dayNames;
+            const currentDayNames = langData[currentLang].dayNames;
             
             days.forEach((day, index) => {
-                let dayName;
-                if (currentLang === 'th') {
-                    dayName = index === 0 ? 'วันนี้' : 
-                              index === 1 ? 'พรุ่งนี้' : 
-                              dayNames[day.date.getDay()];
-                } else if (currentLang === 'en') {
-                    dayName = index === 0 ? 'Today' : 
-                              index === 1 ? 'Tomorrow' : 
-                              dayNames[day.date.getDay()];
-                } else if (currentLang === 'ja') {
-                    dayName = index === 0 ? '今日' : 
-                              index === 1 ? '明日' : 
-                              dayNames[day.date.getDay()];
-                } else if (currentLang === 'zh') {
-                    dayName = index === 0 ? '今天' : 
-                              index === 1 ? '明天' : 
-                              dayNames[day.date.getDay()];
-                } else if (currentLang === 'es') {
-                    dayName = index === 0 ? 'Hoy' : 
-                              index === 1 ? 'Mañana' : 
-                              dayNames[day.date.getDay()];
-                }
-                
-                const maxPressure = Math.max(...day.pressures);
-                const minPressure = Math.min(...day.pressures);
-                const maxTemp = Math.max(...day.temps);
-                const minTemp = Math.min(...day.temps);
-                
-                const iconCounts = day.icons.reduce((acc, icon) => {
-                    acc[icon] = (acc[icon] || 0) + 1;
-                    return acc;
-                }, {});
-                const mostCommonIcon = Object.keys(iconCounts).reduce((a, b) => iconCounts[a] > iconCounts[b] ? a : b, day.icons[0]);
+                const todayStr = langData[currentLang].today;
+                const tomorrowStr = langData[currentLang].tomorrow;
+                let dayName = index === 0 ? todayStr : (index === 1 ? tomorrowStr : currentDayNames[day.date.getDay()]);
 
-                const dailyItem = document.createElement('div');
-                dailyItem.className = 'daily-item';
-                dailyItem.innerHTML = `
+                const avgTemp = Math.round(day.temps.reduce((a, b) => a + b, 0) / day.temps.length);
+                const maxPressure = Math.round(Math.max(...day.pressures));
+                const minPressure = Math.round(Math.min(...day.pressures));
+
+                const iconMode = day.icons.reduce(
+                    (a, b, i, arr) => (arr.filter(v => v === a).length >= arr.filter(v => v === b).length ? a : b),
+                null);
+                
+                const dayItem = document.createElement('div');
+                dayItem.className = 'daily-item';
+                dayItem.innerHTML = `
                     <div class="day-name">${dayName}</div>
-                    <div style="font-size: 0.9em; margin-bottom: 8px; opacity: 0.8;">
-                        ${day.date.getDate()}/${day.date.getMonth() + 1}
-                    </div>
-                    <div style="font-size: 1.8em; margin: 8px 0;">
-                        ${getWeatherIcon(mostCommonIcon)}
-                    </div>
-                    <div style="margin: 8px 0;">
-                        <strong>${langData[currentLang].pressureLabel}</strong>
-                        <div class="high-low">
-                            <span class="high-pressure">↑${Math.round(maxPressure)}</span>
-                            <span class="low-pressure">↓${Math.round(minPressure)}</span>
-                        </div>
-                    </div>
-                    <div style="font-size: 0.9em; opacity: 0.8;">
-                        🌡️ ${Math.round(minTemp)}° - ${Math.round(maxTemp)}°C
+                    <div style="font-size: 2em; margin: 5px 0;">${getWeatherIcon(iconMode)}</div>
+                    <div style="margin-bottom: 8px;">${avgTemp}°C</div>
+                    <div><small>${langData[currentLang].pressureLabel}</small></div>
+                    <div class="high-low">
+                        <span class="high-pressure">↑ ${maxPressure}</span>
+                        <span class="low-pressure">↓ ${minPressure}</span>
                     </div>
                 `;
-                container.appendChild(dailyItem);
+                container.appendChild(dayItem);
             });
         }
 
-        function getWeatherIcon(iconCode) {
-            const iconMap = {
-                '01d': '☀️', '01n': '🌙',
-                '02d': '⛅', '02n': '☁️',
-                '03d': '☁️', '03n': '☁️',
-                '04d': '☁️', '04n': '☁️',
-                '09d': '🌧️', '09n': '🌧️',
-                '10d': '🌦️', '10n': '🌧️',
-                '11d': '⛈️', '11n': '⛈️',
-                '13d': '❄️', '13n': '❄️',
-                '50d': '🌫️', '50n': '🌫️'
-            };
-            return iconMap[iconCode] || '🌤️';
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            loadThemeAndLang();
 
-        async function searchWeather() {
-            const location = document.getElementById('locationInput').value.trim();
-            if (!location) {
-                showError('errorNoLocation');
-                return;
-            }
+            document.getElementById('locationInput').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') {
+                    searchWeather();
+                }
+            });
 
-            showLoading();
-
-            try {
-                let response;
-                
-                try {
-                    response = await fetch(
-                        `${API_BASE}/weather?q=${location}&appid=${API_KEY}`
-                    );
+            document.querySelectorAll('.lang-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    const newLang = button.dataset.lang;
+                    if (newLang === currentLang) return;
+                    currentLang = newLang;
+                    localStorage.setItem('lang', currentLang);
+                    applyLanguage(currentLang);
                     
-                    if (!response.ok) {
-                        throw new Error('Direct API failed');
+                    if (document.getElementById('weatherData').style.display === 'block') {
+                         fetchWeatherData(lastCoords.lat, lastCoords.lon);
                     }
-                } catch (directError) {
-                    console.log('Using CORS proxy for search...');
-                    response = await fetch(
-                        `${CORS_PROXY}${API_BASE}/weather?q=${location}&appid=${API_KEY}`
-                    );
-                }
-
-                if (!response.ok) {
-                    throw new Error('NOT_FOUND');
-                }
-
-                const data = await response.json();
-                await fetchWeatherData(data.coord.lat, data.coord.lon, location);
-                document.getElementById('locationInput').value = '';
-            } catch (error) {
-                if (error.message === 'NOT_FOUND') {
-                    showError('errorNotFound');
-                } else {
-                    showError('errorFetch');
-                }
-            }
-        }
-
-        function getCurrentLocation() {
-            if (!navigator.geolocation) {
-                showError('errorGeolocation');
-                return;
-            }
-
-            showLoading();
-
-            navigator.geolocation.getCurrentPosition(
-                async (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    await fetchWeatherData(lat, lon);
-                },
-                (error) => {
-                    let messageKey = 'errorGeolocation';
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            messageKey = 'errorPermissionDenied';
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            messageKey = 'errorUnavailable';
-                            break;
-                        case error.TIMEOUT:
-                            messageKey = 'errorTimeout';
-                            break;
-                    }
-                    showError(messageKey);
-                }
-            );
-        }
-
-        document.getElementById('locationInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchWeather();
-            }
-        });
-
-        document.querySelectorAll('.lang-button').forEach(button => {
-            button.addEventListener('click', () => {
-                currentLang = button.dataset.lang;
-                localStorage.setItem('lang', currentLang);
-                applyLanguage(currentLang);
-                
-                // Re-fetch weather data in new language if data is already displayed
-                const weatherDataElement = document.getElementById('weatherData');
-                if (weatherDataElement.style.display !== 'none' && !weatherDataElement.classList.contains('initial-load')) {
-                    const lat = JSON.parse(localStorage.getItem('last-coords')).lat;
-                    const lon = JSON.parse(localStorage.getItem('last-coords')).lon;
-                    fetchWeatherData(lat, lon);
-                }
+                });
             });
-        });
 
-        window.onload = () => {
-            loadThemeAndLang(); // เรียกใช้ฟังก์ชันเพื่อโหลดธีมและภาษาที่ผู้ใช้ตั้งค่าไว้
-            fetchWeatherData(13.7563, 100.5018, 'Bangkok');
-        };
+            // Initial fetch for Bangkok
+            fetchWeatherData(lastCoords.lat, lastCoords.lon);
+        });
     </script>
 </body>
 </html>
